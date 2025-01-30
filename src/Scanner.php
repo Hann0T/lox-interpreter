@@ -9,6 +9,25 @@ class Scanner
     private int $current = 0; // pointer of current char
     private int $line = 1;
 
+    private array $keywords = [
+        "and" => TokenType::AND,
+        "class" => TokenType::_CLASS,
+        "else" => TokenType::ELSE,
+        "false" => TokenType::FALSE,
+        "for" => TokenType::FOR,
+        "fun" => TokenType::FUN,
+        "if" => TokenType::IF,
+        "nil" => TokenType::NIL,
+        "or" => TokenType::OR,
+        "print" => TokenType::PRINT,
+        "return" => TokenType::RETURN,
+        "super" => TokenType::SUPER,
+        "this" => TokenType::THIS,
+        "true" => TokenType::TRUE,
+        "var" => TokenType::VAR,
+        "while" => TokenType::WHILE,
+    ];
+
     public function __construct(public string $source)
     {
         //
@@ -100,11 +119,24 @@ class Scanner
             default:
                 if (is_numeric($c)) {
                     $this->number();
+                } elseif ($this->is_alpha($c)) {
+                    $this->identifier();
                 } else {
                     Lox::error($this->line, "Unexpected character {$c}.");
                 }
                 break;
         }
+    }
+
+    // maximal munch
+    private function identifier(): void
+    {
+        while ($this->is_alpha_numeric($this->peek())) $this->advance();
+
+        $text = substr($this->source, $this->start, $this->current - $this->start);
+        $type = $this->keywords[$text] ?? TokenType::IDENTIFIER;
+
+        $this->addToken($type);
     }
 
     private function number(): void
@@ -163,6 +195,21 @@ class Scanner
     {
         if ($this->current + 1 >= strlen($this->source)) return '\0';
         return $this->source[$this->current + 1] ?? '\0';
+    }
+
+    private function is_alpha_numeric(string $c): bool
+    {
+        return $this->is_alpha($c) || $this->is_digit($c);
+    }
+
+    private function is_alpha(string $c): bool
+    {
+        return ($c >= 'a' && $c <= 'z') || ($c >= 'A' && $c <= 'Z') || $c == '_';
+    }
+
+    private function is_digit(string $c): bool
+    {
+        return $c >= '0' && $c <= '9';
     }
 
     private function advance(): ?string
