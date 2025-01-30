@@ -56,7 +56,7 @@ class Lox
 
     static function error(int $line, string $message)
     {
-        Lox::report($line, "", $message);
+        // Lox::report($line, "", $message);
     }
 
     static function report(int $line, string $where, string $message)

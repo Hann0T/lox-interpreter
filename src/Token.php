@@ -17,6 +17,6 @@ class Token implements Stringable
 
     public function __toString(): string
     {
-        return "{$this->type->name} | {$this->lexeme} | {$this->literal}";
+        return "{$this->type->name} | {$this->lexeme} | {$this->literal} | {$this->line}";
     }
 }

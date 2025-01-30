@@ -79,7 +79,7 @@ class Scanner
                 break;
             case '/':
                 if ($this->match('/')) {
-                    while (!strcmp($this->peek(), '\n') && !$this->isAtEnd()) {
+                    while ((strcmp($this->peek(), PHP_EOL) !== 0) && !$this->isAtEnd()) {
                         $this->advance();
                     };
                 } else {
@@ -91,13 +91,56 @@ class Scanner
             case '\t':
                 // ignore whitespace
                 break;
-            case '\n':
+            case PHP_EOL:
                 $this->line++;
                 break;
+            case '"':
+                $this->string();
+                break;
             default:
-                Lox::error($this->line, "Unexpected character {$c}.");
+                if (is_numeric($c)) {
+                    $this->number();
+                } else {
+                    Lox::error($this->line, "Unexpected character {$c}.");
+                }
                 break;
         }
+    }
+
+    private function number(): void
+    {
+        while (is_numeric($this->peek())) $this->advance();
+
+        // Look for a fractional part.
+        if ($this->peek() == '.' && is_numeric($this->peekNext())) {
+            // Consume the "."
+            $this->advance();
+
+            while (is_numeric($this->peek())) $this->advance();
+        }
+
+        $text = substr($this->source, $this->start, $this->current - $this->start);
+        $this->addToken(TokenType::NUMBER, floatval($text));
+    }
+
+    private function string(): void
+    {
+        while (strcmp($this->peek(), '"') !== 0 && !$this->isAtEnd()) {
+            if (strcmp($this->peek(), PHP_EOL) === 0) $this->line++;
+            $this->advance();
+        }
+
+        if ($this->isAtEnd()) {
+            Lox::error($this->line, "Unterminated String.");
+            return;
+        }
+
+        // the closing "
+        $this->advance();
+
+        $len = $this->current - $this->start - 1; // -1 for the +1 in the offset
+        $value = substr($this->source, $this->start + 1, $len - 1);
+        $this->addToken(TokenType::STRING, $value);
     }
 
     private function match(string $expected): bool
@@ -114,6 +157,12 @@ class Scanner
         if ($this->isAtEnd()) return '\0';
 
         return $this->source[$this->current] ?? '\0';
+    }
+
+    private function peekNext(): string
+    {
+        if ($this->current + 1 >= strlen($this->source)) return '\0';
+        return $this->source[$this->current + 1] ?? '\0';
     }
 
     private function advance(): ?string
