@@ -3,6 +3,8 @@
 (( )){} // grouping stuff
 "hello world"
 !*+-/=<> <= == // operators
+/* another comment
+asdfsadfasf */
 "bye world"
 123123
 321.123

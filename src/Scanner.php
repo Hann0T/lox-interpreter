@@ -101,6 +101,8 @@ class Scanner
                     while ((strcmp($this->peek(), PHP_EOL) !== 0) && !$this->isAtEnd()) {
                         $this->advance();
                     };
+                } elseif ($this->match('*')) {
+                    $this->multilineComment();
                 } else {
                     $this->addToken(TokenType::SLASH);
                 }
@@ -126,6 +128,23 @@ class Scanner
                 }
                 break;
         }
+    }
+
+    private function multilineComment(): void
+    {
+        while ((strcmp($this->peek(), '*') !== 0) && (strcmp($this->peekNext(), '/') !== 0) && !$this->isAtEnd()) {
+            if (strcmp($this->peek(), PHP_EOL) === 0) $this->line++;
+            $this->advance();
+        };
+
+        if ($this->isAtEnd()) {
+            Lox::error($this->line, "Unterminated Comment.");
+            return;
+        }
+
+        // consume the */
+        $this->advance();
+        $this->advance();
     }
 
     // maximal munch
